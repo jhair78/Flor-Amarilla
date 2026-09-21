@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Para Lucía 🌻 - Flor Interactiva</title>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&family=Montserrat:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            background: radial-gradient(circle at center, #1f1405 0%, #080501 100%);
+            font-family: 'Montserrat', sans-serif;
+            color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow-x: hidden;
+            padding: 20px 10px;
+        }
+
+        #canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .main-container {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        /* Tarjeta Principal */
+        .card {
+            background: rgba(255, 255, 255, 0.04);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 215, 0, 0.25);
+            border-radius: 28px;
+            padding: 35px 25px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 0 35px rgba(255, 215, 0, 0.1);
+        }
+
+        .date-badge {
+            display: inline-block;
+            background: linear-gradient(45deg, #ffd700, #ffae00);
+            color: #1a0f00;
+            font-size: 0.85rem;
+            font-weight: 600;
+            padding: 6px 18px;
+            border-radius: 20px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 15px;
+        }
+
+        h1 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 3.5rem;
+            color: #ffe600;
+            text-shadow: 0 0 15px rgba(255, 230, 0, 0.5);
+            margin-bottom: 10px;
+        }
+
+        /* Área de la Flor SVG */
+        .garden {
+            width: 100%;
+            height: 280px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            position: relative;
+            margin: 10px 0;
+        }
+
+        svg.flower-svg {
+            width: 220px;
+            height: 280px;
+            overflow: visible;
+        }
+
+        /* Partes de la flor animadas */
+        .stem {
+            stroke: #4CAF50;
+            stroke-width: 6;
+            stroke-linecap: round;
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .leaf {
+            fill: #388E3C;
+            transition: transform 0.6s ease, opacity 0.6s ease;
+            transform-origin: center;
+        }
+
+        .bud {
+            fill: #FFC107;
+            transition: all 0.5s ease;
+        }
+
+        .petals {
+            transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.8s ease;
+            transform-origin: 100px 70px;
+        }
+
+        /* Botón de Riego */
+        .controls {
+            margin-top: 15px;
+        }
+
+        .btn-water {
+            background: linear-gradient(135deg, #ffd700 0%, #ff9900 100%);
+            color: #1a0f00;
+            border: none;
+            padding: 14px 32px;
+            font-size: 1.05rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(255, 215, 0, 0.4);
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .btn-water:hover {
+            transform: translateY(-3px) scale(1.04);
+            box-shadow: 0 8px 28px rgba(255, 215, 0, 0.6);
+        }
+
+        .btn-water:disabled {
+            background: #555;
+            color: #aaa;
+            cursor: default;
+            box-shadow: none;
+            transform: none;
+        }
+
+        /* Mensajes dinámicos y Poema */
+        .message-box {
+            min-height: 70px;
+            font-size: 1.1rem;
+            color: #fff8d6;
+            line-height: 1.6;
+            margin: 20px 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .poem-box {
+            display: none;
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 4px solid #ffd700;
+            padding: 18px 22px;
+            border-radius: 0 16px 16px 0;
+            text-align: left;
+            font-style: italic;
+            font-size: 1rem;
+            line-height: 1.8;
+            color: #fff8d6;
+            margin-top: 20px;
+            animation: fadeIn 1s ease;
+        }
+
+        /* Galería de Fotos con Marcos Bonitos */
+        .photo-section {
+            display: none;
+            width: 100%;
+            animation: fadeIn 1.2s ease;
+        }
+
+        .photo-section h2 {
+            font-family: 'Dancing Script', cursive;
+            font-size: 2.2rem;
+            color: #ffd700;
+            margin-bottom: 20px;
+        }
+
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            width: 100%;
+        }
+
+        .photo-frame {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid #ffd700;
+            border-radius: 18px;
+            padding: 12px;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.2);
+            transition: transform 0.3s ease;
+            text-align: center;
+        }
+
+        .photo-frame:hover {
+            transform: translateY(-5px) rotate(1deg);
+        }
+
+        .photo-frame img {
+            width: 100%;
+            height: 220px;
+            object-fit: cover;
+            border-radius: 12px;
+            margin-bottom: 10px;
+        }
+
+        .photo-frame p {
+            font-size: 0.9rem;
+            color: #ffe600;
+            font-weight: 500;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvas"></canvas>
+
+    <div class="main-container">
+        
+        <!-- Tarjeta Interactiva -->
+        <div class="card">
+            <span class="date-badge">21 de Septiembre 💛</span>
+            <h1>Para Lucía</h1>
+
+            <!-- Jardín y Flor SVG -->
+            <div class="garden">
+                <svg class="flower-svg" viewBox="0 0 200 280">
+                    <!-- Suelo / Tierra -->
+                    <path d="M 20,260 Q 100,245 180,260 Q 100,275 20,260 Z" fill="#4a2f13" />
+                    <ellipse cx="100" cy="260" rx="60" ry="10" fill="#36200b" />
+
+                    <!-- Tallo (Empieza cortito) -->
+                    <path id="stem" class="stem" d="M 100,260 Q 100,260 100,250" />
+
+                    <!-- Hoja Izquierda -->
+                    <path id="leaf-left" class="leaf" d="M 100,210 Q 70,200 65,220 Q 85,230 100,210" style="opacity: 0; transform: scale(0);" />
+
+                    <!-- Hoja Derecha -->
+                    <path id="leaf-right" class="leaf" d="M 100,180 Q 130,170 135,190 Q 115,200 100,180" style="opacity: 0; transform: scale(0);" />
+
+                    <!-- Capullo inicial -->
+                    <circle id="bud" class="bud" cx="100" cy="250" r="6" />
+
+                    <!-- Pétalos Amarillos (Se abren al final) -->
+                    <g id="petals" class="petals" style="opacity: 0; transform: scale(0);">
+                        <!-- 8 Pétalos -->
+                        <path d="M 100,70 C 90,30 100,15 100,15 C 100,15 110,30 100,70" fill="#FFD700" />
+                        <path d="M 100,70 C 90,30 100,15 100,15 C 100,15 110,30 100,70" fill="#FFD700" transform="rotate(45 100 70)" />
+                        <path d="M 100,70 C 90,30 100,15 100,15 C 100,15 110,30 100,70" fill="#FFD700" transform="rotate(90 100 70)" />
+                        <path d="M 100,70 C 90,30 100,15 100,15 C 100,15 110,30 100,70" fill="#FFD700" transform="rotate(135 100 70)" />
+                        <path d="M 100,70 C 90,30 100,15 100,15 C 100,15 110,30 100,70" fill="#FFD700" transform="rotate(180 100 70)" />
+                        <path d="M 100,70 C 90,30 100,15 100,15 C 100,15 110,30 100,70" fill="#FFD700" transform="rotate(225 100 70)" />
+                        <path d="M 100,70 C 90,30 100,15 100,15 C 100,15 110,30 100,70" fill="#FFD700" transform="rotate(270 100 70)" />
+                        <path d="M 100,70 C 90,30 100,15 100,15 C 100,15 110,30 100,70" fill="#FFD700" transform="rotate(315 100 70)" />
+                        
+                        <!-- Centro de la flor -->
+                        <circle cx="100" cy="70" r="16" fill="#8B4513" />
+                        <circle cx="100" cy="70" r="13" fill="#D2691E" />
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Caja de Mensaje -->
+            <div class="message-box" id="messageBox">
+                🌱 La semilla está sembrada... Presiona el botón para darle amor y hacerla crecer.
+            </div>
+
+            <!-- Botón -->
+            <div class="controls">
+                <button class="btn-water" id="waterBtn" onclick="growFlower()">
+                    💧 Regar y cultivar amor
+                </button>
+            </div>
+
+            <!-- Poema Final -->
+            <div class="poem-box" id="poemBox">
+                Entre mil destellos y tonos de sol,<br>
+                llegaste a mi vida a ser mi faro y mi amor.<br>
+                Hoy florece amarilla la primavera en la ciudad,<br>
+                pero tú, Princesa🌙💚, eres mi eterna felicidad. 🌻💛
+            </div>
+        </div>
+
+        <!-- Seccion de Fotos (Aparece cuando florece) -->
+        <div class="photo-section" id="photoSection">
+            <h2>Nuestros Recuerdos Favoritos ✨</h2>
+            <div class="photo-grid">
+                
+                <!-- Foto 1 -->
+                <div class="photo-frame">
+                    <!-- Cambia 'foto1.jpg' por la ruta o link de tu foto -->
+                    <img src="Imagenes/Img2.jpeg" alt="Lucía">
+                    <p>Tu sonrisa ilumina mi día ❤️</p>
+                </div>
+
+                <!-- Foto 2 -->
+                <div class="photo-frame">
+                    <!-- Cambia 'foto2.jpg' por la ruta o link de tu foto -->
+                    <img src="Imagenes/Img1.jpeg" alt="Momentos">
+                    <p>Juntos en cada paso 🌻</p>
+                </div>
+
+                <!-- Foto 3 -->
+                <div class="photo-frame">
+                    <!-- Cambia 'foto3.jpg' por la ruta o link de tu foto -->
+                    <img src="Imagenes/Img3.jpeg" alt="Especial">
+                    <p>Mi Princesa 🌙💚 </p>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Lógica de crecimiento interactivo
+        let stage = 0;
+
+        const stem = document.getElementById('stem');
+        const leafLeft = document.getElementById('leaf-left');
+        const leafRight = document.getElementById('leaf-right');
+        const bud = document.getElementById('bud');
+        const petals = document.getElementById('petals');
+        const messageBox = document.getElementById('messageBox');
+        const waterBtn = document.getElementById('waterBtn');
+        const poemBox = document.getElementById('poemBox');
+        const photoSection = document.getElementById('photoSection');
+
+        const stages = [
+            {
+                stemPath: "M 100,260 Q 95,230 100,200",
+                budY: 200,
+                message: "🌱 ¡Brotó el primer tallo! Cada gota de agua refleja lo mucho que te quiero.",
+                leafL: false, leafR: false, bloom: false
+            },
+            {
+                stemPath: "M 100,260 Q 105,200 100,150",
+                budY: 150,
+                message: "🌿 Nacen las primeras hojas... Como este amor por ti, Lucía, que no para de crecer.",
+                leafL: true, leafR: false, bloom: false
+            },
+            {
+                stemPath: "M 100,260 Q 90,170 100,100",
+                budY: 100,
+                message: "✨ Ya casi... El capullo está lleno de luz y energía para ti.",
+                leafL: true, leafR: true, bloom: false
+            },
+            {
+                stemPath: "M 100,260 Q 110,160 100,70",
+                budY: 70,
+                message: "🌻 ¡FLORECIÓ! De todas las flores del mundo, ninguna brilla tanto como tú, mi Lucía hermosa.",
+                leafL: true, leafR: true, bloom: true
+            }
+        ];
+
+        function growFlower() {
+            if (stage < stages.length) {
+                const current = stages[stage];
+
+                // Animar Tallo
+                stem.setAttribute('d', current.stemPath);
+                
+                // Mover Capullo
+                bud.setAttribute('cy', current.budY);
+
+                // Animar Hojas
+                if (current.leafL) {
+                    leafLeft.style.opacity = '1';
+                    leafLeft.style.transform = 'scale(1)';
+                }
+                if (current.leafR) {
+                    leafRight.style.opacity = '1';
+                    leafRight.style.transform = 'scale(1)';
+                }
+
+                // Mensaje
+                messageBox.innerHTML = current.message;
+
+                // Floración Final
+                if (current.bloom) {
+                    bud.style.opacity = '0';
+                    petals.style.opacity = '1';
+                    petals.style.transform = 'scale(1)';
+                    
+                    waterBtn.disabled = true;
+                    waterBtn.innerHTML = "✨ ¡Florecida con éxito! 💛";
+
+                    // Mostrar Poema y Galería
+                    poemBox.style.display = 'block';
+                    photoSection.style.display = 'block';
+
+                    // Lluvia masiva de pétalos
+                    explodePetals();
+                }
+
+                stage++;
+            }
+        }
+
+        // Canvas de Pétalos Flotantes
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const particles = [];
+
+        class Petal {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = -20;
+                this.size = Math.random() * 7 + 5;
+                this.speedY = Math.random() * 1.5 + 0.8;
+                this.speedX = Math.random() * 1 - 0.5;
+                this.angle = Math.random() * 360;
+                this.spin = Math.random() * 2 - 1;
+                this.opacity = Math.random() * 0.7 + 0.3;
+                this.color = Math.random() > 0.3 ? '#FFD700' : '#FFA500';
+            }
+
+            update() {
+                this.y += this.speedY;
+                this.x += Math.sin(this.y * 0.01) + this.speedX;
+                this.angle += this.spin;
+
+                if (this.y > canvas.height + 20) {
+                    this.reset();
+                }
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate((this.angle * Math.PI) / 180);
+                ctx.globalAlpha = this.opacity;
+                ctx.fillStyle = this.color;
+                
+                ctx.beginPath();
+                ctx.ellipse(0, 0, this.size, this.size / 2, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < 35; i++) {
+            const p = new Petal();
+            p.y = Math.random() * canvas.height;
+            particles.push(p);
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        function explodePetals() {
+            for (let i = 0; i < 40; i++) {
+                const p = new Petal();
+                p.x = window.innerWidth / 2;
+                p.y = window.innerHeight / 2;
+                p.speedY = (Math.random() - 0.7) * 7;
+                p.speedX = (Math.random() - 0.5) * 8;
+                particles.push(p);
+            }
+        }
+    </script>
+</body>
+</html>
